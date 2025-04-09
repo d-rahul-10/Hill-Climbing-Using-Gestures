@@ -55,32 +55,43 @@ while True:
             # Draw the hand landmarks on the frame
             mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
-            # For the right hand, press the 'Gas' button
+            # Initialize status text
+            status_text = ""
+
+            # Check if fist gesture is detected
             if is_fist(landmarks):  
-                # Press gas button if the right hand is closed
-                if landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x > 0.25:  # Right hand possible action
+                # Right hand closed: Accelerator (Gas)
+                if landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x > 0.5:  # Right hand (larger x value)
                     if not is_gas_pressed:
-                        print("Right hand closed: Gas")
-                        keyboard.press(Key.right)  # Gas (Right key)
+                        print("Right hand closed: Accelerator (Gas)")
+                        keyboard.press(Key.right)  # Accelerator (Right arrow key)
                         is_gas_pressed = True
                         is_brake_pressed = False
-                # Press brake if the left hand is closed
-                if landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x < 0.5:  # Identifying left hand
+                    status_text = "Accelerator (Gas)"
+
+                # Left hand closed: Brake
+                elif landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x < 0.5:  # Left hand (smaller x value)
                     if not is_brake_pressed:
                         print("Left hand closed: Brake")
-                        keyboard.press(Key.left)  # Brake (Left key)
+                        keyboard.press(Key.left)  # Brake (Left arrow key)
                         is_brake_pressed = True
                         is_gas_pressed = False
+                    status_text = "Brake"
+
                 sleep(0.1)  # Delay for stability
 
             # Release keys when the hand is not closed
             else:
                 if is_gas_pressed:
-                    keyboard.release(Key.right)  # Release gas key
+                    keyboard.release(Key.right)  # Release accelerator key
                     is_gas_pressed = False
                 if is_brake_pressed:
                     keyboard.release(Key.left)  # Release brake key
                     is_brake_pressed = False
+
+            # Display the status text on the frame if an action is detected
+            if status_text:
+                cv2.putText(frame, status_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
     # Show the frame with hand gesture control
     cv2.imshow("Hand Gesture Control", frame)
